@@ -1,10 +1,13 @@
 #include "userprog/syscall.h"
 #include <stdio.h>
 #include <syscall-nr.h>
+#include <filesys/file.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "filesys/filesys.h"
 #include "devices/shutdown.h"
+#include <devices/input.h>
+#include "userprog/process.h"
 
 static void syscall_handler (struct intr_frame *);
 void check_address(void *address);

@@ -22,10 +22,6 @@ static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 void argument_stack(const char **parse, const int arg_cnt, void **esp);
 
-int process_add_file(struct file *f);
-struct file *process_get_file(int fd);
-void process_close_file(int fd);
-
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
@@ -178,6 +174,8 @@ process_exit (void)
   for(;cur->next_fd>=2;--cur->next_fd)
     process_close_file(cur->next_fd);
   palloc_free_page(cur->fd_table);
+
+  file_close(cur->run_file);
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
@@ -342,12 +340,19 @@ load (const char *file_name, void (**eip) (void), void **esp)
 
   /* Open executable file. */
 
+  lock_acquire(&sys_lock);
+
   file = filesys_open (file_name);
   if (file == NULL) 
   {
+    lock_release(&sys_lock);
     printf ("load: %s: open failed\n", file_name);
     goto done; 
   }
+
+  t->run_file=file;
+  file_deny_write(file);
+  lock_release(&sys_lock);
 
   /* Read and verify executable header. */
 
