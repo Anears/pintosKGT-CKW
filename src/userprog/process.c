@@ -221,6 +221,7 @@ process_activate (void)
 int
 process_add_file(struct file *f)
 {
+  if(f==NULL)return -1;
   struct thread *t=thread_current();
   int fd=t->next_fd++;
   t->fd_table[fd]=f;

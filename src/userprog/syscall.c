@@ -13,10 +13,18 @@ void halt(void);
 void exit(int status);
 bool create(const char *file, unsigned initial_size);
 bool remove(const char *file);
+int open(const char *file);
+int filesize(int fd);
+int read(int fd,void *buffer,unsigned size);
+int write(int fd,void *buffer,unsigned size);
+void seek(int fd,unsigned position);
+unsigned tell(int fd);
+void close(int fd);
 
 void
 syscall_init (void) 
 {
+  lock_init(&sys_lock);
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
 
@@ -98,4 +106,82 @@ bool
 remove(const char *file)
 { 
   return filesys_remove(file);
+}
+
+int
+open(const char *file)
+{
+  return process_add_file(filesys_open(file));
+}
+
+int
+filesize(int fd)
+{
+  struct file *f=process_get_file(fd);
+  if(f==NULL) return -1;
+  else return file_length(f);
+}
+
+int
+read(int fd,void *buffer,unsigned size)
+{
+  if(fd==STDIN_FILENO)
+  {
+    unsigned i;
+    for(i=0;i<size;++i)
+      ((char *)buffer)[i]=input_getc();
+    lock_release(&sys_lock);
+    return size;
+  }
+  struct file *f=process_get_file(fd);
+  if(f==NULL)
+  {
+    lock_release(&sys_lock);
+    return -1;
+  }
+  size=file_read(f,buffer,size);
+  lock_release(&sys_lock);
+  return size;
+}
+
+int
+write(int fd,void *buffer,unsigned size)
+{
+  lock_acquire(&sys_lock);
+  if(fd==STDOUT_FILENO)
+  {
+    putbuf(buffer,size);
+    lock_release(&sys_lock);
+    return size;
+  }
+  struct file *f=process_get_file(fd);
+  if(f==NULL)
+  {
+    lock_release(&sys_lock);
+    return 0;
+  }
+  size=file_write(f,buffer,size);
+  lock_release(&sys_lock);
+  return size;
+}
+
+void
+seek(int fd,unsigned position)
+{
+  struct file *f=process_get_file(fd);
+  if(f==NULL) return;
+  file_seek(f,position);
+}
+
+unsigned tell(int fd)
+{
+  struct file *f=process_get_file(fd);
+  if(f==NULL) exit(-1);
+  return file_tell(f);
+}
+
+void
+close(int fd)
+{
+  process_close_file(fd);
 }
