@@ -53,11 +53,34 @@ syscall_handler (struct intr_frame *f UNUSED)
       get_argument(esp,args,1);
       f->eax=remove((const char *)args[0]);
       break;
-   /* case SYS_WRITE:
-      get_argument(esp,arg,3);
-      check_adress(arg[1]);
-      f->eax=write(arg[0],arg[1],arg[2]);
-      break;*/
+    case SYS_OPEN:
+      get_argument(esp,args,1);
+      f->eax=open((const char *)args[0]);
+      break;
+    case SYS_FILESIZE:
+      get_argument(esp,args,1);
+      f->eax=filesize((int)args[0]);
+      break;
+    case SYS_READ:
+      get_argument(esp,args,3);
+      f->eax=read((int)args[0],(void *)args[1],(unsigned)args[2]);
+      break;
+    case SYS_WRITE:
+      get_argument(esp,args,3);
+      f->eax=write((int)args[0],(void *)args[1],(unsigned)args[2]);
+      break;
+    case SYS_SEEK:
+      get_argument(esp,args,2);
+      seek((int)args[0],(unsigned)args[1]);
+      break;
+    case SYS_TELL:
+      get_argument(esp,args,1);
+      f->eax=tell((int)args[0]);
+      break;
+    case SYS_CLOSE:
+      get_argument(esp,args,1);
+      close((int)args[0]);
+      break;
     default:
       exit(-1);
   }
