@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include <threads/synch.h>
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -102,6 +103,13 @@ struct thread
     struct file **fd_table;
     int next_fd;
     struct file *run_file;
+    struct thread *parent_thread;
+    int is_load;
+    int is_exit;
+    struct semaphore load_sema;
+    struct semaphore exit_sema;
+    struct list child_list;
+    struct list_elem child_elem;
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */

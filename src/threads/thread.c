@@ -184,9 +184,6 @@ thread_create (const char *name, int priority,
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
 
-  t->fd_table=palloc_get_page(PAL_ZERO);
-  t->next_fd=2;
-
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
      member cannot be observed. */
@@ -209,6 +206,16 @@ thread_create (const char *name, int priority,
 
   intr_set_level (old_level);
 
+  t->parent_thread = thread_current();
+  t->is_load=0;
+  t->is_exit=0;
+  //list_init(&t->child_list);
+  sema_init(&t->load_sema,0);
+  sema_init(&t->exit_sema,0);
+  list_push_back(&thread_current()->child_list,&t->child_elem);
+
+  t->fd_table=palloc_get_page(PAL_ZERO);
+  t->next_fd=2;
   /* Add to run queue. */
   thread_unblock (t);
 
@@ -300,9 +307,16 @@ thread_exit (void)
   /* Remove thread from all threads list, set our status to dying,
      and schedule another process.  That process will destroy us
      when it calls thread_schedule_tail(). */
+
+  struct thread *t=thread_current();
+
   intr_disable ();
-  list_remove (&thread_current()->allelem);
-  thread_current ()->status = THREAD_DYING;
+  list_remove (&t->allelem);
+
+  if(strcmp(t->name,"main"))
+    sema_up(&t->exit_sema);
+
+  t->status = THREAD_DYING;
   schedule ();
   NOT_REACHED ();
 }
@@ -474,7 +488,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
 
-//  list_init(&t->child_list);
+  list_init(&t->child_list);
 
 }
 
@@ -547,7 +561,7 @@ thread_schedule_tail (struct thread *prev)
   if (prev != NULL && prev->status == THREAD_DYING && prev != initial_thread) 
     {
       ASSERT (prev != cur);
-      palloc_free_page (prev);
+      //palloc_free_page (prev);
     }
 }
 
