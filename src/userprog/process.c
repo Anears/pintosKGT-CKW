@@ -132,7 +132,7 @@ start_process (void *file_name_)
   while(token_cnt--)
     free(parse[token_cnt]);
   free(parse);
-
+  palloc_free_page(file_name_);
   asm volatile ("movl %0, %%esp; jmp intr_exit" : : "g" (&if_) : "memory");
 
   NOT_REACHED ();

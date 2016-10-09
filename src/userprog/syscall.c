@@ -164,7 +164,16 @@ int
 open(const char *file)
 {
   check_address((void *)file);
-  return process_add_file(filesys_open(file));
+  lock_acquire(&sys_lock);
+  struct file *fn=filesys_open(file);
+  if(fn==NULL)
+  {
+    lock_release(&sys_lock);
+    return -1;
+  }
+  int fd=process_add_file(fn);
+  lock_release(&sys_lock);
+  return fd;
 }
 
 int
