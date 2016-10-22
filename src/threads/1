@@ -5,7 +5,6 @@
 #include <list.h>
 #include <stdint.h>
 #include <threads/synch.h>
-#include "devices/timer.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -113,9 +112,6 @@ struct thread
     struct list_elem child_elem;
     int64_t wakeup_tick;
 
-    int nice;
-    int recent_cpu;
-
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };
@@ -160,14 +156,5 @@ void thread_sleep(int64_t ticks);
 void thread_awake(int64_t ticks);
 void update_next_tick_to_awake(int64_t ticks);
 int64_t get_next_tick_to_awake(void);
-
-void test_max_priority(void);
-bool cmp_priority(const struct list_elem *a,const struct list_elem *b,void *aux UNUSED);
-
-void mlfqs_priority(struct thread *t);
-void mlfqs_recent_cpu(struct thread *t);
-void mlfqs_load_avg(void);
-void mlfqs_increment(void);
-void mlfqs_recalc(void);
 
 #endif /* threads/thread.h */
