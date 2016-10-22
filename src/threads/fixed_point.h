@@ -12,9 +12,9 @@
 #define add_mixed(x,n) ((x)+int_to_fp(n))
 #define sub_fp(x,y) ((x)-(y))
 #define sub_mixed(x,n) ((x)-int_to_fp(n))
-#define mult_fp(x,y) ((int64_t)(x)*(y)/F)
+#define mult_fp(x,y) (((int64_t)(x))*(y)/F)
 #define mult_mixed(x,n) ((x)*(n))
-#define div_fp(x,y) ((int64_t)(x)*F/(y))
+#define div_fp(x,y) (((int64_t)(x))*F/(y))
 #define div_mixed(x,n) ((x)/(n))
 
 /*
